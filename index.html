@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="gemini-svg.png">
+    <title>Checklist 800 Pro - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a, #020617);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Custom Checkbox Animation */
+        .cbx-container input:checked ~ .cbx-custom {
+            animation: pop 0.3s ease;
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        /* Notification Container */
+        #toast-container {
+            z-index: 9999;
+        }
+        /* Smooth Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.8);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col justify-between antialiased selection:bg-indigo-500 selection:text-white">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none"></div>
+
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 flex-grow">
+        
+        <header class="glass-card rounded-2xl p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 transition-all">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-indigo-500 to-violet-500 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-square-check text-xl text-white animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Checklist 800 Pro</h1>
+                    <div class="flex items-center gap-1.5 text-xs text-emerald-400 font-medium mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping"></span>
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Auto-save ke LocalStorage Aktif
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-sm font-semibold tracking-wide text-slate-400 bg-slate-950/40 px-4 py-2 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-2"><i class="fa-regular fa-calendar text-indigo-400"></i> <span id="realtime-date">--/--/----</span></div>
+                <div class="h-4 w-px bg-slate-800"></div>
+                <div class="flex items-center gap-2"><i class="fa-regular fa-clock text-violet-400"></i> <span id="realtime-time" class="font-mono text-indigo-300">00:00:00</span></div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 flex flex-col gap-6">
+                
+                <section class="glass-card rounded-3xl p-6 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-8 opacity-5 text-9xl font-black pointer-events-none text-white select-none transition-transform group-hover:scale-110 duration-500" id="bg-target-num">#1</div>
+                    
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-800/60 pb-4">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-widest text-indigo-400 px-2.5 py-1 bg-indigo-500/10 rounded-md border border-indigo-500/20">Target Aktif</span>
+                            <h2 class="text-2xl font-black text-white mt-1.5" id="target-title">Target #1</h2>
+                        </div>
+                        <div class="text-right sm:text-right w-full sm:w-auto">
+                            <span class="text-xs text-slate-400 block font-medium">Batas Maksimal</span>
+                            <span class="text-lg font-bold text-slate-200">800 Checklist</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-slate-950/40 p-3 rounded-xl border border-slate-800/40">
+                            <span class="text-xs text-slate-400 block mb-0.5 font-medium">Selesai</span>
+                            <span class="text-xl font-bold text-emerald-400 font-mono" id="stat-done">0</span>
+                        </div>
+                        <div class="bg-slate-950/40 p-3 rounded-xl border border-slate-800/40">
+                            <span class="text-xs text-slate-400 block mb-0.5 font-medium">Sisa</span>
+                            <span class="text-xl font-bold text-amber-400 font-mono" id="stat-remaining">800</span>
+                        </div>
+                        <div class="bg-slate-950/40 p-3 rounded-xl border border-slate-800/40">
+                            <span class="text-xs text-slate-400 block mb-0.5 font-medium">Status</span>
+                            <span class="text-sm font-extrabold uppercase inline-flex items-center gap-1 mt-1 text-indigo-400" id="target-status">
+                                <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> Berjalan
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-end">
+                            <span class="text-sm font-semibold text-slate-300 font-mono" id="progress-ratio">0 / 800</span>
+                            <span class="text-2xl font-black text-indigo-400 font-mono" id="progress-percent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-950/60 rounded-full h-4 p-0.5 border border-slate-800">
+                            <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-300 ease-out shadow-lg shadow-indigo-500/20" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <main class="glass-card rounded-3xl p-8 flex flex-col items-center justify-center text-center min-h-[280px] border-2 border-dashed border-indigo-500/20 bg-gradient-to-b from-indigo-950/10 to-slate-900/40 relative">
+                    <div class="absolute top-4 left-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Area Kerja Utama</div>
+                    
+                    <div class="w-full max-w-md">
+                        <label class="cbx-container cursor-pointer relative flex flex-col items-center group select-none">
+                            <input type="checkbox" id="main-checkbox" class="absolute opacity-0 w-0 h-0">
+                            
+                            <div class="cbx-custom w-24 h-24 rounded-2xl bg-slate-950/80 border-2 border-slate-700 group-hover:border-indigo-500 flex items-center justify-center transition-all duration-300 shadow-2xl group-hover:shadow-indigo-500/10 mb-6">
+                                <i class="fa-solid fa-check text-4xl text-transparent transition-all duration-200"></i>
+                            </div>
+                            
+                            <div class="space-y-1">
+                                <span class="text-sm font-semibold tracking-wider uppercase text-slate-400 block group-hover:text-slate-300 transition-colors">Tekan Untuk Menyelesaikan</span>
+                                <div class="text-2xl font-extrabold text-white group-hover:text-indigo-300 transition-colors tracking-tight" id="checklist-label">
+                                    Checklist Nomor 1
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </main>
+
+                <section class="glass-card rounded-3xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-indigo-400"></i> Ringkasan Aktivitas & Statistik
+                    </h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50">
+                            <span class="text-xs font-medium text-slate-400 block mb-1">Total Target Finish</span>
+                            <span class="text-2xl font-extrabold text-white font-mono" id="stat-total-target">0</span>
+                        </div>
+                        <div class="bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50">
+                            <span class="text-xs font-medium text-slate-400 block mb-1">Total Klik Checklist</span>
+                            <span class="text-2xl font-extrabold text-white font-mono" id="stat-total-clicks">0</span>
+                        </div>
+                        <div class="bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50">
+                            <span class="text-xs font-medium text-slate-400 block mb-1">Hari Ini</span>
+                            <span class="text-2xl font-extrabold text-indigo-400 font-mono" id="stat-click-today">0</span>
+                        </div>
+                        <div class="bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50">
+                            <span class="text-xs font-medium text-slate-400 block mb-1">Minggu Ini</span>
+                            <span class="text-2xl font-extrabold text-violet-400 font-mono" id="stat-click-week">0</span>
+                        </div>
+                        <div class="bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50">
+                            <span class="text-xs font-medium text-slate-400 block mb-1">Bulan Ini</span>
+                            <span class="text-2xl font-extrabold text-pink-400 font-mono" id="stat-click-month">0</span>
+                        </div>
+                        <div class="bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50">
+                            <span class="text-xs font-medium text-slate-400 block mb-1">Target Aktif Ke-</span>
+                            <span class="text-2xl font-extrabold text-amber-400 font-mono" id="stat-active-target-idx">1</span>
+                        </div>
+                        <div class="bg-slate-950/30 p-4 rounded-2xl border border-slate-800/50 col-span-2">
+                            <span class="text-xs font-medium text-slate-400 block mb-1">Rata-rata Durasi per Target</span>
+                            <span class="text-base font-bold text-emerald-400 truncate block mt-1" id="stat-avg-duration">Belum ada data</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                
+                <section class="glass-card rounded-3xl p-6 flex flex-col max-h-[460px]">
+                    <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-violet-400"></i> Riwayat Target
+                        </h3>
+                        <span class="text-xs font-mono bg-slate-950 px-2 py-1 rounded-md border border-slate-800 text-slate-400" id="history-count">0 Selesai</span>
+                    </div>
+                    
+                    <div id="history-list" class="flex-grow overflow-y-auto space-y-3 pr-1 min-h-[250px] flex flex-col justify-start">
+                        <div class="text-center py-8 text-slate-500 text-sm my-auto" id="history-empty">
+                            <i class="fa-solid fa-folder-open text-3xl mb-2 block opacity-30"></i>
+                            Belum ada riwayat target selesai.
+                        </div>
+                    </div>
+                </section>
+
+                <section class="glass-card rounded-3xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-pink-400"></i> Panel Pengaturan
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="confirmResetTarget()" class="flex items-center justify-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-xl py-2.5 px-3 text-xs font-bold transition-all cursor-pointer">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> Reset Target
+                            </button>
+                            <button onclick="confirmClearHistory()" class="flex items-center justify-center gap-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20 rounded-xl py-2.5 px-3 text-xs font-bold transition-all cursor-pointer">
+                                <i class="fa-solid fa-trash-can"></i> Hapus Riwayat
+                            </button>
+                        </div>
+
+                        <button onclick="confirmResetAll()" class="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-2.5 px-4 text-xs font-bold transition-all cursor-pointer">
+                            <i class="fa-solid fa-dumpster-fire"></i> Reset Semua Data Aplikasi
+                        </button>
+
+                        <div class="h-px bg-slate-800 my-2"></div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="exportDataJSON()" class="flex items-center justify-center gap-2 bg-slate-950/60 hover:bg-slate-950 text-slate-300 border border-slate-800 rounded-xl py-2.5 px-3 text-xs font-bold transition-all cursor-pointer">
+                                <i class="fa-solid fa-download text-indigo-400"></i> Export JSON
+                            </button>
+                            <label class="flex items-center justify-center gap-2 bg-slate-950/60 hover:bg-slate-950 text-slate-300 border border-slate-800 rounded-xl py-2.5 px-3 text-xs font-bold transition-all cursor-pointer">
+                                <i class="fa-solid fa-upload text-violet-400"></i> Import JSON
+                                <input type="file" id="import-file" class="hidden" accept=".json" onchange="importDataJSON(event)">
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="backupLocalStorage()" class="flex items-center justify-center gap-2 bg-slate-950/60 hover:bg-slate-950 text-slate-300 border border-slate-800 rounded-xl py-2.5 px-3 text-xs font-bold transition-all cursor-pointer">
+                                <i class="fa-solid fa-shield-halved text-emerald-400"></i> Backup Local
+                            </button>
+                            <button onclick="restoreLocalStorage()" class="flex items-center justify-center gap-2 bg-slate-950/60 hover:bg-slate-950 text-slate-300 border border-slate-800 rounded-xl py-2.5 px-3 text-xs font-bold transition-all cursor-pointer">
+                                <i class="fa-solid fa-window-restore text-pink-400"></i> Restore Backup
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full border-t border-slate-800/80 bg-slate-950/50 backdrop-blur-md py-4 text-xs text-slate-500 font-medium">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-4">
+                <span><strong>Checklist 800 Pro</strong> v1.0.0</span>
+                <span class="hidden sm:inline text-slate-700">|</span>
+                <span id="storage-size-info" class="font-mono"><i class="fa-solid fa-database mr-1"></i> Data Size: 0B</span>
+            </div>
+            <div class="flex items-center gap-1 text-slate-400">
+                <span>Engineered with HTML, CSS, JavaScript (Local Storage Stack)</span>
+            </div>
+            <div>
+                &copy; 2026 Premium Dashboard System. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- CONSTANTS ---
+        const MAX_CHECKLIST = 800;
+
+        // --- CORE APPLICATION STATE ---
+        let appState = {
+            activeTarget: 1,
+            currentChecklist: 1,
+            startTime: null,
+            history: [],
+            stats: {
+                totalTargetFinished: 0,
+                totalClicks: 0,
+                clickRecords: [] // array of timestamps for time intelligence filters
+            }
+        };
+
+        // --- REALTIME TIME CLOCK ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('realtime-date').innerText = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            document.getElementById('realtime-time').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- MODERN TOAST NOTIFICATION SYSTEM ---
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 bg-slate-900 border-l-4 p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-12 opacity-0 pointer-events-auto border-indigo-500`;
+            
+            let icon = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+            if (type === 'info') {
+                toast.style.borderColor = '#3b82f6';
+                icon = '<i class="fa-solid fa-circle-info text-blue-400"></i>';
+            } else if (type === 'warning') {
+                toast.style.borderColor = '#f59e0b';
+                icon = '<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>';
+            } else if (type === 'danger') {
+                toast.style.borderColor = '#ef4444';
+                icon = '<i class="fa-solid fa-circle-xmark text-red-400"></i>';
+            } else {
+                toast.style.borderColor = '#10b981';
+            }
+
+            toast.innerHTML = `
+                <div class="text-lg">${icon}</div>
+                <div class="text-xs font-semibold text-slate-200">${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, 10);
+
+            // Trigger animation out and remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-12', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // --- PERSISTENCE LAYER (LOCALSTORAGE) ---
+        function saveData() {
+            localStorage.setItem('checklist_800_pro_state', JSON.stringify(appState));
+            calculateStorageSize();
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('checklist_800_pro_state');
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                    // Ensure defensive programming structures exist
+                    if (!appState.stats) appState.stats = { totalTargetFinished: 0, totalClicks: 0, clickRecords: [] };
+                    if (!appState.stats.clickRecords) appState.stats.clickRecords = [];
+                    if (!appState.history) appState.history = [];
+                } catch (e) {
+                    console.error("Error parsing stored application architecture, resetting to safe defaults.", e);
+                }
+            }
+            // Set Start Time if missing on active session tracking
+            if (appState.currentChecklist > 1 && !appState.startTime) {
+                appState.startTime = Date.now();
+            }
+            renderDOM();
+        }
+
+        function calculateStorageSize() {
+            let total = 0;
+            for (let x in localStorage) {
+                if (localStorage.hasOwnProperty(x)) {
+                    total += ((localStorage[x].length + x.length) * 2);
+                }
+            }
+            let sizeStr = (total < 1024) ? total + " B" : (total / 1024).toFixed(2) + " KB";
+            document.getElementById('storage-size-info').innerHTML = `<i class="fa-solid fa-database mr-1"></i> Data Size: ${sizeStr}`;
+        }
+
+        // --- TIME FORMATTING INSIGHTS ENGINE ---
+        function formatDuration(ms) {
+            if (!ms || isNaN(ms)) return "0s";
+            let seconds = Math.floor(ms / 1000);
+            let minutes = Math.floor(seconds / 60);
+            let hours = Math.floor(minutes / 60);
+            let days = Math.floor(hours / 24);
+
+            if (days > 0) return `${days}hari ${hours % 24}jam`;
+            if (hours > 0) return `${hours}jam ${minutes % 60}m`;
+            if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+            return `${seconds}detik`;
+        }
+
+        function getRelativeTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            if (diff < 60000) return 'Baru saja';
+            const minutes = Math.floor(diff / 60000);
+            if (minutes < 60) return `${minutes} menit lalu`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} jam lalu`;
+            const days = Math.floor(hours / 24);
+            return `${days} hari lalu`;
+        }
+
+        // --- ANALYTICAL CALCULATIONS ---
+        function filterClicksByTimeframe(msRange) {
+            const now = Date.now();
+            return appState.stats.clickRecords.filter(ts => (now - ts) <= msRange).length;
+        }
+
+        function updateStatisticalCalculations() {
+            document.getElementById('stat-total-target').innerText = appState.stats.totalTargetFinished;
+            document.getElementById('stat-total-clicks').innerText = appState.stats.totalClicks;
+            document.getElementById('stat-active-target-idx').innerText = appState.activeTarget;
+
+            // Time frames metrics
+            const ONE_DAY = 24 * 60 * 60 * 1000;
+            const ONE_WEEK = 7 * ONE_DAY;
+            const ONE_MONTH = 30 * ONE_DAY;
+
+            document.getElementById('stat-click-today').innerText = filterClicksByTimeframe(ONE_DAY);
+            document.getElementById('stat-click-week').innerText = filterClicksByTimeframe(ONE_WEEK);
+            document.getElementById('stat-click-month').innerText = filterClicksByTimeframe(ONE_MONTH);
+
+            // Compute Average Processing Duration
+            if (appState.history.length === 0) {
+                document.getElementById('stat-avg-duration').innerText = "Belum ada data";
+            } else {
+                let totalDuration = appState.history.reduce((acc, item) => acc + (item.duration || 0), 0);
+                let avg = totalDuration / appState.history.length;
+                document.getElementById('stat-avg-duration').innerText = formatDuration(avg);
+            }
+        }
+
+        // --- CORE UI SYNC AND TRANSITION ENGINE ---
+        function renderDOM() {
+            const doneCount = appState.currentChecklist - 1;
+            const remainingCount = MAX_CHECKLIST - doneCount;
+            const percentage = Math.floor((doneCount / MAX_CHECKLIST) * 100);
+
+            // Update Target Meta Card info
+            document.getElementById('target-title').innerText = `Target #${appState.activeTarget}`;
+            document.getElementById('bg-target-num').innerText = `#${appState.activeTarget}`;
+            document.getElementById('stat-done').innerText = doneCount;
+            document.getElementById('stat-remaining').innerText = remainingCount;
+
+            // Target Completion Verification styling UI updates
+            const statusBadge = document.getElementById('target-status');
+            const progressBar = document.getElementById('progress-bar');
+            
+            if (percentage === 100) {
+                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Selesai`;
+                statusBadge.className = "text-sm font-extrabold uppercase inline-flex items-center gap-1 mt-1 text-emerald-400";
+                progressBar.className = "bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-300 ease-out shadow-lg shadow-emerald-500/20";
+            } else {
+                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> Berjalan`;
+                statusBadge.className = "text-sm font-extrabold uppercase inline-flex items-center gap-1 mt-1 text-indigo-400";
+                progressBar.className = "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-300 ease-out shadow-lg shadow-indigo-500/20";
+            }
+
+            // Sync Text values
+            document.getElementById('progress-ratio').innerText = `${doneCount} / ${MAX_CHECKLIST}`;
+            document.getElementById('progress-percent').innerText = `${percentage}%`;
+            progressBar.style.width = `${percentage}%`;
+
+            // Core Work Area Processing Interface View
+            const mainCheckbox = document.getElementById('main-checkbox');
+            const checkIcon = document.querySelector('.cbx-custom i');
+            const cbxCustomBox = document.querySelector('.cbx-custom');
+
+            if (appState.currentChecklist <= MAX_CHECKLIST) {
+                document.getElementById('checklist-label').innerText = `Checklist Nomor ${appState.currentChecklist}`;
+                mainCheckbox.checked = false;
+                mainCheckbox.disabled = false;
+                checkIcon.className = "fa-solid fa-check text-4xl text-transparent";
+                cbxCustomBox.className = "cbx-custom w-24 h-24 rounded-2xl bg-slate-950/80 border-2 border-slate-700 group-hover:border-indigo-500 flex items-center justify-center transition-all duration-300 shadow-2xl group-hover:shadow-indigo-500/10 mb-6";
+            }
+
+            // Update Analytical Framework counters
+            updateStatisticalCalculations();
+
+            // Render History Stack Layout View list
+            renderHistoryDOM();
+        }
+
+        function renderHistoryDOM() {
+            const listContainer = document.getElementById('history-list');
+            const emptyState = document.getElementById('history-empty');
+            
+            // Clean previous iterations completely except dynamic components
+            const elements = listContainer.querySelectorAll('.history-item-card');
+            elements.forEach(el => el.remove());
+
+            document.getElementById('history-count').innerText = `${appState.history.length} Selesai`;
+
+            if (appState.history.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            } else {
+                emptyState.style.display = 'none';
+            }
+
+            // Loop inside context architecture stack trace reverse order
+            for (let i = appState.history.length - 1; i >= 0; i--) {
+                const item = appState.history[i];
+                const itemCard = document.createElement('div');
+                itemCard.className = "history-item-card bg-slate-950/50 border border-slate-800/80 rounded-2xl p-4 space-y-2 hover:bg-slate-950 transition-all";
+                
+                itemCard.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-extrabold text-sm text-white">Target #${item.targetNumber}</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">Selesai</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-400 font-medium">
+                        <div>Total: <span class="font-mono text-slate-200">${item.totalChecklist}/${item.totalChecklist}</span></div>
+                        <div class="text-right">Durasi: <span class="font-mono text-indigo-400">${formatDuration(item.duration)}</span></div>
+                        <div class="mt-1 pt-1 border-t border-slate-900 col-span-2 flex justify-between text-[11px] text-slate-500 font-semibold">
+                            <span><i class="fa-regular fa-calendar-check mr-1"></i> ${item.endDate} ${item.endTime}</span>
+                            <span class="text-violet-400 font-mono">${getRelativeTime(item.timestamp)}</span>
+                        </div>
+                    </div>
+                `;
+                listContainer.appendChild(itemCard);
+            }
+        }
+
+        // --- CORE PROCESS EXECUTION EVENTS HANDLER ---
+        document.getElementById('main-checkbox').addEventListener('change', function(e) {
+            if (!this.checked) return;
+
+            // Trigger internal graphical representation instantly
+            const checkIcon = document.querySelector('.cbx-custom i');
+            const cbxCustomBox = document.querySelector('.cbx-custom');
+            checkIcon.className = "fa-solid fa-check text-4xl text-white";
+            cbxCustomBox.className = "cbx-custom w-24 h-24 rounded-2xl bg-gradient-to-tr from-indigo-500 to-pink-500 border-none flex items-center justify-center transition-all duration-300 shadow-xl shadow-indigo-500/30 mb-6 animate-bounce";
+
+            this.disabled = true;
+
+            setTimeout(() => {
+                executeChecklistIncrement();
+            }, 250); // Fluid visual execution lag to see checking affirmation
+        });
+
+        function executeChecklistIncrement() {
+            // Track Start Duration Time dynamically
+            if (appState.currentChecklist === 1) {
+                appState.startTime = Date.now();
+                showNotification(`Target #${appState.activeTarget} resmi dimulai!`, 'info');
+            }
+
+            // Increment Global Data Sets
+            appState.stats.totalClicks += 1;
+            appState.stats.clickRecords.push(Date.now());
+
+            if (appState.currentChecklist < MAX_CHECKLIST) {
+                appState.currentChecklist += 1;
+                showNotification(`Checklist Nomor ${appState.currentChecklist - 1} Selesai.`, 'success');
+                saveData();
+                renderDOM();
+            } else {
+                // VALUE REACHED TARGET 800 - TRIGGER AUTOMATIC COMPLETED ARCHITECTURE
+                executeTargetCompletion();
+            }
+        }
+
+        function executeTargetCompletion() {
+            const endTimestamp = Date.now();
+            const dateObj = new Date(endTimestamp);
+            
+            const endDateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const endTimeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const sessionDuration = endTimestamp - (appState.startTime || endTimestamp);
+
+            // Generate Complete History Object Schema
+            const historyLog = {
+                targetNumber: appState.activeTarget,
+                totalChecklist: MAX_CHECKLIST,
+                endDate: endDateStr,
+                endTime: endTimeStr,
+                duration: sessionDuration,
+                timestamp: endTimestamp
+            };
+
+            // Commit state transitions updates
+            appState.history.push(historyLog);
+            appState.stats.totalTargetFinished += 1;
+            
+            // Advance Active Workspace sequence boundaries
+            appState.activeTarget += 1;
+            appState.currentChecklist = 1;
+            appState.startTime = null; // Clean timer array for automatic next cycle run initialization
+
+            saveData();
+            
+            // Trigger Visual Success Dialog Overlay
+            Swal.fire({
+                title: '<span class="text-white font-black">Target Selesai! 🎉</span>',
+                html: `
+                    <div class="text-slate-300 text-sm space-y-2">
+                        <p>Selamat! Anda berhasil menuntaskan maksimal <span class="text-emerald-400 font-bold">800 Checklist</span> pada target ini.</p>
+                        <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-left font-mono text-xs space-y-1 mt-4">
+                            <div><span class="text-slate-500">Durasi Kerja:</span> <span class="text-indigo-400 font-bold">${formatDuration(sessionDuration)}</span></div>
+                            <div><span class="text-slate-500">Waktu Selesai:</span> <span class="text-slate-300">${endDateStr} @ ${endTimeStr}</span></div>
+                        </div>
+                        <p class="text-[11px] text-violet-400 font-medium pt-2">Sistem otomatis membuat Target #${appState.activeTarget} untuk Anda terus bekerja.</p>
+                    </div>
+                `,
+                background: 'linear-gradient(to bottom, #1e1b4b, #0f172a)',
+                color: '#f8fafc',
+                confirmButtonText: 'Lanjutkan Ke Target Berikutnya',
+                confirmButtonColor: '#6366f1',
+                customClass: {
+                    popup: 'border border-indigo-500/30 rounded-3xl'
+                }
+            });
+
+            showNotification(`Target #${historyLog.targetNumber} Berhasil Diselesaikan!`, 'success');
+            renderDOM();
+        }
+
+        // --- PANEL ADMINISTRATION FUNCTION CONTROLLERS ---
+        function confirmResetTarget() {
+            Swal.fire({
+                title: 'Reset Target Aktif?',
+                text: "Progres target saat ini akan diulang kembali dari nomor 1.",
+                icon: 'warning',
+                background: '#0f172a',
+                color: '#f8fafc',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Ya, Reset',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    appState.currentChecklist = 1;
+                    appState.startTime = null;
+                    saveData();
+                    renderDOM();
+                    showNotification('Target aktif berhasil direset kembali ke nomor 1.', 'warning');
+                }
+            });
+        }
+
+        function confirmClearHistory() {
+            Swal.fire({
+                title: 'Hapus Semua Riwayat?',
+                text: "Seluruh daftar riwayat target yang sukses diselesaikan akan dihapus permanen.",
+                icon: 'warning',
+                background: '#0f172a',
+                color: '#f8fafc',
+                showCancelButton: true,
+                confirmButtonColor: '#ea580c',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Hapus Permanen',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    appState.history = [];
+                    saveData();
+                    renderDOM();
+                    showNotification('Seluruh berkas riwayat pengerjaan dibersihkan.', 'danger');
+                }
+            });
+        }
+
+        function confirmResetAll() {
+            Swal.fire({
+                title: 'Reset Total Seluruh Data?',
+                text: "Aksi ini mengembalikan aplikasi ke kondisi pabrik awal. Target, riwayat, dan statistik akan lenyap seluruhnya!",
+                icon: 'danger',
+                background: '#0f172a',
+                color: '#f8fafc',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Reset Total Segala Data',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem('checklist_800_pro_state');
+                    appState = {
+                        activeTarget: 1,
+                        currentChecklist: 1,
+                        startTime: null,
+                        history: [],
+                        stats: { totalTargetFinished: 0, totalClicks: 0, clickRecords: [] }
+                    };
+                    saveData();
+                    renderDOM();
+                    showNotification('Seluruh ekosistem data aplikasi dibersihkan total.', 'danger');
+                }
+            });
+        }
+
+        // --- DATA INTERCHANGE ENGINE COMPONENT (JSON EXPORT/IMPORT) ---
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Checklist800Pro_Backup_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showNotification('Data sukses diexport ke file JSON.', 'info');
+        }
+
+        function importDataJSON(event) {
+            const fileReader = new FileReader();
+            if(!event.target.files[0]) return;
+            
+            fileReader.onload = function(e) {
+                try {
+                    const importedObj = JSON.parse(e.target.result);
+                    if(importedObj.activeTarget && importedObj.currentChecklist) {
+                        appState = importedObj;
+                        saveData();
+                        renderDOM();
+                        showNotification('Data JSON berhasil diimport masuk ke sistem.', 'success');
+                    } else {
+                        showNotification('Struktur berkas JSON tidak valid!', 'danger');
+                    }
+                } catch (err) {
+                    showNotification('Gagal memproses parsing file JSON!', 'danger');
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+            document.getElementById('import-file').value = ""; // Clear file selector string buffer
+        }
+
+        // --- LOCAL STORAGE SECURE MIRRORING SYSTEMS ---
+        function backupLocalStorage() {
+            try {
+                const rawString = JSON.stringify(appState);
+                localStorage.setItem('checklist_800_pro_secure_mirror', rawString);
+                showNotification('Backup Internal LocalStorage Sukses Dibuat.', 'success');
+            } catch (e) {
+                showNotification('Gagal membuat kloning memori lokal!', 'danger');
+            }
+        }
+
+        function restoreLocalStorage() {
+            const backupMirror = localStorage.getItem('checklist_800_pro_secure_mirror');
+            if(!backupMirror) {
+                showNotification('Data cadangan internal tidak ditemukan!', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Restore Data Cadangan?',
+                text: "Mengembalikan data berdasarkan waktu terakhir tombol 'Backup Local' ditekan.",
+                icon: 'question',
+                background: '#0f172a',
+                color: '#f8fafc',
+                showCancelButton: true,
+                confirmButtonColor: '#ec4899',
+                cancelButtonColor: '#334155',
+                confirmButtonText: 'Pulihkan Data',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.setItem('checklist_800_pro_state', backupMirror);
+                    loadData();
+                    showNotification('Data berhasil dipulihkan dari cadangan internal.', 'success');
+                }
+            });
+        }
+
+        // --- INITIALIZATION ENTRY POINT ---
+        window.onload = function() {
+            loadData();
+            calculateStorageSize();
+        };
+    </script>
+</body>
+</html>
